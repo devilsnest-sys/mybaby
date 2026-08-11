@@ -27,7 +27,7 @@ let musicNodes = [];
 const apologyLines = [
   "Aww come on, don't be mean to me.",
   "Okay, fair. I probably deserve one more tiny glare.",
-  "Still here. Still sorry. Still choosing you.",
+  "Still here. Still sorry. Still missing you.",
   "If this button runs away, it is only because it fears your anger."
 ];
 
