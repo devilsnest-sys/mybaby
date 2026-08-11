@@ -23,6 +23,7 @@ let touchStartX = 0;
 let touchStartY = 0;
 let audioContext;
 let musicNodes = [];
+let visitedPages = Array(pages.length).fill(false);
 
 const apologyLines = [
   "Aww come on, don't be mean to me.",
@@ -152,11 +153,27 @@ function renderGallery() {
   });
 }
 
+function sendChoiceEmail(label, detail = "") {
+  const recipient = "luvps3242@gmail.com";
+  const subject = encodeURIComponent(`New choice from your app: ${label}`);
+  const body = encodeURIComponent(`Hi,\n\nA choice was made in your app.\n\nLabel: ${label}\nDetail: ${detail}\nTime: ${new Date().toLocaleString()}\n\nSent from: luvps3242@gmail.com`);
+  const mailtoUrl = `mailto:${recipient}?subject=${subject}&body=${body}`;
+  window.open(mailtoUrl, "_blank", "noopener,noreferrer");
+}
+
+function sendPageVisitEmail() {
+  visitedPages[currentIndex] = true;
+  const visitedCount = visitedPages.filter(Boolean).length;
+  const completedAll = visitedPages.every(Boolean);
+  const detail = `Page ${currentIndex + 1} visited. Visited pages: ${visitedCount}/${pages.length}. All pages visited: ${completedAll ? "Yes" : "No"}`;
+  sendChoiceEmail("Page visit", detail);
+}
+
 function renderPlaylist() {
   if (!playlistContainer) return;
 
   playlistContainer.innerHTML = playlistItems.map((song) => `
-    <button class="playlist-card" type="button" data-url="${song.url}">
+    <button class="playlist-card" type="button" data-url="${song.url}" data-title="${song.title}">
       <span class="play-icon">▶</span>
       <span>
         <span class="playlist-title">${song.title}</span>
@@ -169,6 +186,7 @@ function renderPlaylist() {
   playlistContainer.querySelectorAll(".playlist-card").forEach((card) => {
     card.addEventListener("click", () => {
       vibrate();
+      sendChoiceEmail("Playlist song selected", card.dataset.title);
       window.open(card.dataset.url, "_blank", "noopener,noreferrer");
     });
   });
@@ -221,6 +239,7 @@ function updateView(direction = 1) {
   document.querySelector(".card-stack")?.scrollTo({ top: 0, behavior: direction ? "smooth" : "auto" });
   revealActivePage();
   runTypewriter();
+  sendPageVisitEmail();
 }
 
 function goToPage(index) {
@@ -309,6 +328,7 @@ yesBtn.addEventListener("click", () => {
   responseBox.style.color = "#9a4d8e";
   vibrate([18, 28, 18]);
   showHearts(44);
+  sendChoiceEmail("Final choice", "Yes ♥");
 });
 
 angryBtn.addEventListener("click", () => {
@@ -319,6 +339,7 @@ angryBtn.addEventListener("click", () => {
     responseBox.textContent = "Okay okay... take all the time you need. I will still be here, sorry and soft.";
     angryBtn.textContent = "softening...";
     angryBtn.style.transform = "scale(0.86)";
+    sendChoiceEmail("Final choice", "Still angry → softened");
     return;
   }
 
@@ -327,21 +348,25 @@ angryBtn.addEventListener("click", () => {
   const scale = Math.max(0.78, 1 - angryClicks * 0.06);
   angryBtn.style.transform = `translate(${moveX}px, ${moveY}px) scale(${scale})`;
   responseBox.textContent = apologyLines[(angryClicks - 1) % apologyLines.length];
+  sendChoiceEmail("Final choice", "Still angry");
 });
 
 prevBtn.addEventListener("click", () => {
   vibrate();
+  sendChoiceEmail("Page navigation", `Back to page ${Math.max(0, currentIndex - 1) + 1}`);
   goToPage(currentIndex - 1);
 });
 
 nextBtn.addEventListener("click", () => {
   vibrate();
+  sendChoiceEmail("Page navigation", `Forward to page ${Math.min(pages.length - 1, currentIndex + 1) + 1}`);
   goToPage(currentIndex + 1);
 });
 
 dots.forEach((dot) => {
   dot.addEventListener("click", () => {
     vibrate();
+    sendChoiceEmail("Page navigation", `Jump to page ${Number(dot.dataset.index) + 1}`);
     goToPage(Number(dot.dataset.index));
   });
 });
@@ -375,17 +400,26 @@ document.addEventListener("touchend", (event) => {
 secretPull.addEventListener("click", () => {
   secretNote.classList.toggle("show");
   vibrate();
+  sendChoiceEmail("Secret button", "Clicked the secret pull");
 });
 
 scratchCard?.addEventListener("pointermove", (event) => {
   if (event.buttons === 1 || event.pointerType === "touch") {
     scratchCard.classList.add("revealed");
     vibrate([10, 15, 10]);
+    if (!scratchCard.dataset.emailSent) {
+      scratchCard.dataset.emailSent = "true";
+      sendChoiceEmail("Scratch card", "Revealed the tiny promise");
+    }
   }
 });
 
 scratchCard?.addEventListener("click", () => {
   scratchCard.classList.add("revealed");
+  if (!scratchCard.dataset.emailSent) {
+    scratchCard.dataset.emailSent = "true";
+    sendChoiceEmail("Scratch card", "Revealed the tiny promise");
+  }
 });
 
 document.querySelectorAll("[data-mood]").forEach((button) => {
@@ -397,6 +431,7 @@ document.querySelectorAll("[data-mood]").forEach((button) => {
     };
     moodResponse.textContent = responses[button.dataset.mood];
     vibrate();
+    sendChoiceEmail("Mood selected", button.dataset.mood);
   });
 });
 
@@ -405,6 +440,7 @@ musicToggle.addEventListener("click", async () => {
   musicToggle.classList.toggle("active", shouldPlay);
   musicToggle.textContent = shouldPlay ? "♫" : "♪";
   vibrate();
+  sendChoiceEmail("Music toggle", shouldPlay ? "Enabled" : "Disabled");
 
   if (shouldPlay && startSoftMusic()) {
     responseBox.textContent = "Soft background music is on.";
