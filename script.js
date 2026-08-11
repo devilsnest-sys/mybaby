@@ -352,27 +352,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowLeft") goToPage(currentIndex - 1);
 });
 
-document.addEventListener("touchstart", (event) => {
-  const touch = event.changedTouches[0];
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
-}, { passive: true });
-
-document.addEventListener("touchend", (event) => {
-  const touch = event.changedTouches[0];
-  const deltaX = touch.clientX - touchStartX;
-  const deltaY = touch.clientY - touchStartY;
-
-  if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
-    goToPage(currentIndex + (deltaX < 0 ? 1 : -1));
-  }
-
-  if (currentIndex === 0 && deltaY > 95 && Math.abs(deltaX) < 45) {
-    secretNote.classList.add("show");
-    vibrate([12, 18, 12]);
-  }
-}, { passive: true });
-
 secretPull.addEventListener("click", () => {
   secretNote.classList.toggle("show");
   vibrate();
